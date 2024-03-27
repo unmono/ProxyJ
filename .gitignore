@@ -1,0 +1,8 @@
+*.env
+.env
+*.tkn
+.tkn
+
+.idea/
+__pycache__/
+venv/
