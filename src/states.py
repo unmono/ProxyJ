@@ -7,7 +7,7 @@ class ProxyState(ABC):
 
     @property
     @abstractmethod
-    def state_value(self) -> int: ...
+    def value(self) -> int: ...
 
     def self_check(self) -> Self:
         return self
@@ -19,21 +19,21 @@ class ProxyState(ABC):
 class Pristine(ProxyState):
 
     @property
-    def state_value(self) -> int:
+    def value(self) -> int:
         return 0
 
 
 class Ready(ProxyState):
 
     @property
-    def state_value(self) -> int:
+    def value(self) -> int:
         return 100
 
 
 class Issued(ProxyState):
 
     @property
-    def state_value(self) -> int:
+    def value(self) -> int:
         return 200
 
 
@@ -43,7 +43,7 @@ class Exhausted(ProxyState):
         self.recovery_time = time.time() + timeout
 
     @property
-    def state_value(self) -> int:
+    def value(self) -> int:
         return 300
 
     def self_check(self) -> Self:
@@ -56,7 +56,7 @@ class Quarantined(ProxyState):
         self.recovery_time = time.time() + timeout
 
     @property
-    def state_value(self) -> int:
+    def value(self) -> int:
         return 100 if self.recovery_time > time.time() else 400
 
     def change_to(self, new_state: ProxyState) -> ProxyState:
@@ -69,5 +69,5 @@ class Quarantined(ProxyState):
 class Broken(ProxyState):
 
     @property
-    def state_value(self) -> int:
+    def value(self) -> int:
         return 500
