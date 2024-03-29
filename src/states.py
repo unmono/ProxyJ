@@ -38,6 +38,47 @@ class ProxyState(ABC):
         return new_state
 
 
+class ProxyStateDescriptor:
+    """
+    Makes possible to run some additional logic while getting and setting states.
+    The goal is to make possible to implement some transitional states that manage themselves while
+    their owners are, for example, being sorted.
+    Example: program can iterate over some instances until it hits one with an appropriate state. At the same
+    time there is an instance with some transitional state that supposed to be changed after timeout.
+    At the moment its state is checked, its method checks if the timeout is over and changes itself to
+    another one, so it can be picked.
+    """
+
+    def __get__(self, instance, owner):
+        try:
+            current_state: ProxyState = getattr(instance, '_state')
+        except AttributeError:
+            raise AttributeError("Instance of proxy class implementation has to have "
+                                 "a '_state' attribute initialized before checking. "
+                                 "It can be some default state or dynamic logic.")
+        try:
+            # .self_check() is a method that supposed to run any additional logic if needed
+            # and return desired state based on it. This new state becomes an actual state
+            # of instance. In a common case it just returns self and nothing changes.
+            instance._state = current_state.self_check()
+        except AttributeError:
+            raise AttributeError("Implementation of proxy state class has to have self_check() method.")
+        return instance._state
+
+    def __set__(self, instance, value: ProxyState):
+        try:
+            # .change_to() is a method that supposed to alter the setting of states if needed.
+            # Let's say that in a common case we want to assign some "Failed" state to instances
+            # that don't work in some way. But also we want to have an instance with some exceptional
+            # state that goes, say, "Quarantined" when we assign "Failed" to it.
+            # This way the logic of user program will be decoupled from any exceptional cases, and they
+            # will be managed by states itself.
+            instance._state = instance._state.change_to(value)
+        except AttributeError:
+            # If the state is not set yet, set it.
+            instance._state = value
+
+
 # Bellow is default set of states to use:
 class Pristine(ProxyState):
     """
